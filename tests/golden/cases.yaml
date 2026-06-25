@@ -1,0 +1,61 @@
+# 排盘黄金测试集 —— 期望值经人工核验(五虎遁/五鼠遁/十神生克),或标注为
+# lunar-python(寿星天文算法)权威基线。新增命例:补一条,只填关心的 expect 字段。
+#
+# 流派约定(lunar-python 默认,已确认):
+#   · 日柱子正(00:00)换日;
+#   · 晚子时(23:00-24:00):日柱仍属当日,但时柱用「次日」日干起五鼠遁
+#     (故会出现 23:xx 日柱不变、时柱已进位)。
+#   · 节气定月、立春换年(非正月初一)。
+# 多流派支持(早晚子时归日等)留待 L3,届时由 config 暴露 lunar-python 的 sect。
+
+# ---- 完整命例(四柱+纳音+双太极点十神+命宫胎元+起运)----
+- name: "1990-06-15 14:30 男 北京(116.40E)"
+  datetime: "1990-06-15 14:30"
+  gender: male
+  longitude: 116.40
+  expect:
+    pillars: {year: 庚午, month: 壬午, day: 辛亥, hour: 乙未}
+    nayin: {year: 路旁土, month: 杨柳木, day: 钗钏金, hour: 沙中金}
+    ten_gods_day: {year: 劫财, month: 伤官, day: 日元, hour: 偏财}   # 太极点=日(子平)
+    ten_gods_year: {year: 年元, month: 食神, day: 劫财, hour: 正财}  # 太极点=年(禄命星命)
+    minggong: 庚辰
+    taiyuan: 癸酉
+    first_dayun: 癸未   # 庚午阳年男顺行
+
+- name: "1985-12-20 23:40 女 上海(121.47E)晚子时"
+  datetime: "1985-12-20 23:40"
+  gender: female
+  longitude: 121.47
+  expect:
+    pillars: {year: 乙丑, month: 戊子, day: 癸巳, hour: 甲子}   # 晚子时:时柱用次日干甲
+    nayin: {year: 海中金, month: 霹雳火, day: 长流水, hour: 海中金}
+    ten_gods_day: {year: 食神, month: 正官, day: 日元, hour: 伤官}
+    minggong: 辛巳
+    taiyuan: 己卯
+    first_dayun: 己丑   # 乙丑阴年女顺行
+
+# ---- 边界:立春换年换月(不做真太阳时,lon=null)----
+- name: "2000-02-04 18:00 立春前(己卯年丑月)"
+  datetime: "2000-02-04 18:00"
+  longitude: null
+  expect:
+    pillars: {year: 己卯, month: 丁丑, day: 壬辰}
+
+- name: "2000-02-04 22:00 立春后(庚辰年寅月)"
+  datetime: "2000-02-04 22:00"
+  longitude: null
+  expect:
+    pillars: {year: 庚辰, month: 戊寅, day: 壬辰}   # 日柱不变,年/月随立春进位
+
+# ---- 边界:子时换日(lon=null)----
+- name: "1990-03-09 23:30 晚子时(日柱不换、时柱进位)"
+  datetime: "1990-03-09 23:30"
+  longitude: null
+  expect:
+    pillars: {day: 癸酉, hour: 甲子}   # 23:xx 仍属 9 日(癸酉),时柱用次日干甲
+
+- name: "1990-03-10 00:30 早子时(日柱已换)"
+  datetime: "1990-03-10 00:30"
+  longitude: null
+  expect:
+    pillars: {day: 甲戌, hour: 甲子}   # 过午夜→10 日(甲戌)

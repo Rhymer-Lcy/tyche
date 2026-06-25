@@ -1,0 +1,25 @@
+{
+  "pdf_info": [
+    {
+      "page_idx": 0,
+      "para_blocks": [
+        {"type": "title", "index": 0, "bbox": [0, 0, 1, 1],
+         "lines": [{"spans": [{"type": "text", "content": "论财官"}]}]},
+        {"type": "text", "index": 1, "bbox": [0, 0, 1, 1],
+         "lines": [{"spans": [{"type": "text", "content": "日主旺，"}, {"type": "text", "content": "财官有气则富贵。"}]}]}
+      ],
+      "discarded_blocks": [
+        {"type": "text", "lines": [{"spans": [{"content": "页眉不应取"}]}]}
+      ]
+    },
+    {
+      "page_idx": 1,
+      "para_blocks": [
+        {"type": "text", "index": 0, "bbox": [0, 0, 1, 1],
+         "lines": [{"spans": [{"content": "伤官见官，为祸百端。"}]}]}
+      ]
+    }
+  ],
+  "_backend": "test",
+  "_version_name": "fixture"
+}
