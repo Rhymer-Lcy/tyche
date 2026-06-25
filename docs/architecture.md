@@ -30,8 +30,8 @@ Deep learning is used in only three peripheral spots, all via **off-the-shelf pr
 | 星命抉古录 | 禄命/星命 (神煞 as the frame, 纳音 as the root) | year | converted to text (traditional Chinese) |
 | 三命通会 | a synthesis (古法 禄命 + 子平 together) | both | near-scan bad glyphs; needs OCR + an orthography dictionary |
 
-**子平 (day):** the day stem is the self; the other pillars take 十神 relative to it; the core is day-master 旺衰, 用神 preferences, and 十神 格局; 神煞 is auxiliary and can be turned off.
-**禄命/星命 (year):** the year pillar's 纳音 is the root; 神煞 anchors mostly on the year branch / year 纳音; 命宫/胎元/小运 follow the 古法.
+**子平(day):** 以日干为我,余柱皆以之取十神;以日主旺衰、用神喜忌、十神格局为纲;神煞为辅,可关闭。
+**禄命/星命(year):** 以年柱纳音为根;神煞多以年支 / 年纳音起;命宫 / 胎元 / 小运依古法。
 
 ---
 

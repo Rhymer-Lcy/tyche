@@ -1,89 +1,89 @@
-# L3 Advanced-Rules Spec: 暗神 layer / 空亡 dialectics / 取格
+# L3 进阶规则规范:暗神层 / 空亡辩证 / 取格
 
-> Source: multi-agent research + adversarial verification (2026-06), from the docs_local corpus
-> (三命通会/玉井奥诀/星命抉古录/命理精华) cross-checked with 子平真诠. Evidence levels:
-> **A strong, default ON / B school switch / C weak, default OFF or label-only**.
-> These are school-sensitive rules; this spec marks each one's evidence strength and school as the
-> implementation contract.
+> 来源:多智能体研究 + 对抗式校验(2026-06),取自 docs_local 语料
+> (三命通会 / 玉井奥诀 / 星命抉古录 / 命理精华),并与子平真诠互校。证据分级:
+> **A 证据强,默认开 / B 随流派切换 / C 证据弱,默认关或仅标注**。
+> 此类规则因派而异;本规范为每条标注证据强度与适用流派,作为实现契约。
 
-## 0. Principle: never mix the virtual/real directions (the root cause of a bug)
-A 虚邀格's "虚神" **must not be filled in and must not be 空亡** (filling/空亡 = broken pattern, negative);
-whereas an ordinary 忌神 **turns auspicious when 逢空** (positive) — the two directions are opposite.
-**They must be distinguished by a context tag** (`virtual_pattern` vs `normal_branch`); **a single
-shared void boolean must not** drive the scoring.
+## 0. 原则:虚实方向不可混(一类缺陷的根因)
 
-## 1. The 暗神 (latent-branch) layer (new `src/tyche/rules/latent.py`)
-`LatentBranch{zhi, mechanism, source_pillars, confidence, filled, guard_ok, hidden_gans}`.
-Once a 虚神 is produced, **reuse** the existing relations/shensha/ten_gods tables on it to get
-暗天乙 / 暗禄 / 暗十神 / 虚神 relations (corpus: a 虚拱 noble qi "generates/controls/punishes/combines
-the self, no different from a real one", 三命通会 p149-295; 玉井奥诀 L669).
+虚邀格的"虚神"**忌填实、忌落空亡**(填实或空亡即破格,主凶);而普通忌神**逢空反吉**——
+二者方向恰好相反。**须以上下文标签区分**(`virtual_pattern` 与 `normal_branch`);
+**不可**以单一共享的 void 布尔值驱动评分。
 
-| Mechanism | Trigger | Guard | Level |
+## 1. 暗神层(latent-branch,新增 `src/tyche/rules/latent.py`)
+
+数据结构 `LatentBranch{zhi, mechanism, source_pillars, confidence, filled, guard_ok, hidden_gans}`。
+虚神一旦生成,即**复用**既有 relations / shensha / ten_gods 表对其求取暗天乙 / 暗禄 / 暗十神 /
+虚神生克(语料:虚拱之贵气"生我、克我、刑我、合我,与真无异",三命通会 p149-295;玉井奥诀 L669)。
+
+| 机制 | 触发 | 把关 | 级别 |
 |---|---|---|---|
-| **夹拱 (拱禄拱贵)** | day and hour **same stem**, branches one apart enclosing the middle, the middle = the DM's 禄/贵 | the middle must not be filled, 空亡, or 冲/刑 | A, default ON |
-| **飞天禄马** | day pillar in {庚子,壬子,辛亥,癸亥}, the branch in force 冲 its opposite (子冲午 / 亥冲巳) to take the opposite-palace 官 | no overt 财官 in the pillars, dislikes an exposed 官, needs one character to combine-hold the 禄马, dislikes filling/entanglement | A, default ON (medium weight) |
-| **倒冲禄** | day pillar in {丙午,丁巳}, 午冲子 for the 癸 inside / 巳冲亥 for the 壬 inside; **the hour is not considered** | as above; 丙午 fears a 未 tie, 丁巳 fears a 申/辰 tie | A, default ON |
-| **邀合 (子遥巳 / 丑遥巳 / 六合邀)** | present branches in force -> invite their combine-partner | **strong guard** (below) | **C, default OFF** (`latent_yaohe_enabled=False`) |
-| 暗合 (遥合) table | the two branches' 本气 hidden stems 五合 | 申卯 / 子巳 / 午亥 (hard corpus evidence) | A; the extended pairs 寅丑 / 子戌 are C (OFF) |
+| **夹拱(拱禄拱贵)** | 日、时**同干**,两支相隔一位夹其中神,中神为日主之禄 / 贵 | 中神不可被填实、空亡或冲 / 刑 | A,默认开 |
+| **飞天禄马** | 日柱属 {庚子,壬子,辛亥,癸亥},以当令之支冲其对宫(子冲午 / 亥冲巳)以邀对宫之官 | 柱中不见明财官,忌官星透出,需一字合住禄马,忌填实、忌绊 | A,默认开(中等权重) |
+| **倒冲禄** | 日柱属 {丙午,丁巳},午冲子取其中之癸 / 巳冲亥取其中之壬;**不取时支** | 同上;丙午忌见未绊,丁巳忌见申 / 辰绊 | A,默认开 |
+| **邀合(子遥巳 / 丑遥巳 / 六合邀)** | 以在位之支邀其合神 | **强把关**(见下) | **C,默认关**(`latent_yaohe_enabled=False`) |
+| 暗合(遥合)表 | 两支本气藏干相五合 | 申卯 / 子巳 / 午亥(语料硬证) | A;扩展对 寅丑 / 子戌 为 C(关) |
 
-**邀合 strong guard (all must pass)**: G1 no overt 财官 in the pillars; G2 the 虚神 must be the DM's
-**正官 / 正禄 / a real 天乙** (checked via `ten_god(ref, 虚神 本气)`; **七杀 and 偏 gods do not count as
-暗贵/暗禄**); G3 present and candidate must not be 三刑/相刑 to each other (寅巳申 / 丑戌未 / 子卯);
-G4 the 虚神 must not be filled or 冲/tied; G5 present is in force (same branch ≥ 2).
+**邀合强把关(须全部通过)**:G1 柱中不见明财官;G2 虚神须为日主之**正官 / 正禄 / 真天乙**
+(以 `ten_god(ref, 虚神本气)` 核验;**七杀与偏神不作暗贵 / 暗禄**);G3 在位之支与候选之支彼此
+不构成三刑 / 相刑(寅巳申 / 丑戌未 / 子卯);G4 虚神不可被填实或冲 / 绊;G5 在位之支当令(同支 ≥ 2)。
 
-> **Sample-chart verdict (壬午戊申壬申戊申)**: the three 申 "inviting 巳" -> **G2 fails** (巳 hides 戊 = 壬's
-> 七杀, not 正官) **and G3 fails** (申 is in the 寅巳申 无恩之刑, a combine carrying a 刑) -> **does not hold**.
-> So "暗贵/暗禄" does not stand classically. (What the three 申 truly point to is 飞财 — 申 冲 the 甲/丙
-> inside 寅 as 财, the 飞财 pattern of 三命通会 — not inviting 巳.)
+> **样盘判词(壬午戊申壬申戊申)**:三申"邀巳"→ **G2 不过**(巳藏戊为壬之七杀,非正官)**且 G3 不过**
+> (申处寅巳申无恩之刑,合中带刑)→ **不成立**。故"暗贵 / 暗禄"于古法不立。(三申真正所指为飞财——
+> 申冲寅中之甲 / 丙为财,即三命通会之飞财格,而非邀巳。)
 
-## 2. The 空亡 dialectics layer (`void_dialectic()`, a second pass after detect_shensha)
-It does not rewrite "hits"; it only outputs `{branch, pillar, context, net_direction in 吉/凶/中,
-target_role in 吉神/忌神/普通, reverts[]}`. First decide whether the branch carries a **吉神
-(禄马财官贵用) or a 忌神/凶煞**, then stack the reversal conditions:
+## 2. 空亡辩证层(`void_dialectic()`,detect_shensha 之后的第二遍)
 
-| Condition | Logic | Level |
+它不改写"命中"结果,仅输出 `{branch, pillar, context, net_direction ∈ 吉/凶/中,
+target_role ∈ 吉神/忌神/普通, reverts[]}`。先判该支所载为**吉神(禄马财官贵用)抑或忌神 / 凶煞**,
+再叠加以下转化条件:
+
+| 条件 | 逻辑 | 级别 |
 |---|---|---|
-| C1 冲 resolves the void | 空亡 met by 冲 -> turns from buried to active (**same-kind 冲 does not move it**, e.g. an empty 壬寅 met by 壬申) | ON |
-| C2 met by 合 | a 吉神 空 + 合 -> not empty, add; a 凶神 空 + 合 -> evil revived, subtract (**opposite directions**) | ON |
-| C3 生旺 | sitting on 长生/临官/帝旺 -> turns auspicious; 死绝墓 -> ominous force retained | ON |
-| C4 filled | a virtual_pattern filled = broken (ominous); a normal 忌神 filled = void resolved (auspicious) — **needs context** | ON |
-| C5 忌神 met by void | a 忌神 / something I control met by void -> turns auspicious ("天中肥殃") | ON |
-| C6 true void | true void = empty & not 冲 & not 合 & not 刑 | ON |
-| C7 五行 imagery | 金空 rings, 火空 shines, 水空 is clear (lean auspicious); 木空 breaks, 土空 collapses (lean ominous) | ON |
-| C9 ominous stacking | a 凶神 met by void + 咸池/六害 present -> more ominous | ON |
-| C10 吉神 force scatters | a 吉神 met by void scatters force ×0.5: 天乙 empty -> empty fame/talent; 禄 empty -> empty fame; 马 empty -> irregular 偏财 | ON |
+| C1 冲解空 | 空亡逢冲 → 由伏转动(**同类之冲不动**,如空之壬寅逢壬申) | 开 |
+| C2 逢合 | 吉神空 + 合 → 不为空,加;凶神空 + 合 → 凶顽复起,减(**方向相反**) | 开 |
+| C3 生旺 | 坐长生 / 临官 / 帝旺 → 转吉;坐死绝墓 → 凶气仍存 | 开 |
+| C4 填实 | virtual_pattern 填实 = 破格(凶);普通忌神填实 = 解空(吉)——**须看上下文** | 开 |
+| C5 忌神逢空 | 忌神 / 我所克者逢空 → 转吉("天中肥殃") | 开 |
+| C6 真空亡 | 真空 = 空且不冲、不合、不刑 | 开 |
+| C7 五行取象 | 金空则鸣、火空则发、水空则清(偏吉);木空则折、土空则崩(偏凶) | 开 |
+| C9 凶象叠加 | 凶神逢空 + 咸池 / 六害同现 → 愈凶 | 开 |
+| C10 吉神力散 | 吉神逢空,力散 ×0.5:天乙空 → 虚名虚才;禄空 → 虚名;马空 → 不正之偏财 | 开 |
 
-### Three pillars all void turn to great nobility [B, `void_three_great_noble='gufa'`, **varies by 太极点**]
-Triggers **only if**: (1) the month/day/hour branches are **all 旬空**; (2) each branch is **self-prosperous
-and useful** (十二长生 旺相, or 五行 金/火/水); (3) **true void** (C6); (4) the chart has a **noble qi**
-to rest on (禄/马/贵/官印). Only two pillars void -> "has office but not great", no trigger.
-> Sample chart, **year 太极点**: 旬空 = 申酉, the month/day/hour 申 are all void, 申 = 壬's 长生 + 金空 rings
-> -> **triggers great nobility**; **day 太极点 (子平)**: 旬空 = 戌亥, the 申 are not void -> no trigger.
-> **This bonus must follow the 太极点 switch.**
-> Source: 三命通会 "论空亡", "when the month/day/hour are all 空亡, it is not a harm but a great noble; if
-> only two, there is office but not great", plus the strong preconditions (self-prosperous-and-useful /
-> 金空 rings / true void) in the same passage. 子平真诠 / the 盲派 are the counter-schools (hence
-> configurable, default on only for 古法 / year 太极点).
+### 三柱皆空化大贵 [B,`void_three_great_noble='gufa'`,**随太极点而变**]
 
-## 3. 取格 (`pattern.py`, implemented + tested)
-- **比劫 form no pattern** (always dropped, folded into 建禄/月刃); if the 本气 is not exposed -> `config.pattern_school`:
-  `ziping` (default; take the exposed other 十神, per 子平真诠 "the prefect not in the prefecture, the deputy acts") / `gufa_dangling` (the in-command 本气 first, exposed gods as 兼).
-- Sample chart: **七杀格** (ziping) / **偏印格 with 七杀 as 兼** (gufa). Fixes the old "比肩格" bug.
-- Verification caveat: 七杀 vs 偏印 is a school split (and "does 申 really hide 戊" is a hidden-stem dispute); **比肩格 is uniformly excluded by all schools.**
+仅当满足下列各项方触发:(1)月、日、时三支**皆旬空**;(2)各支**自旺有用**(十二长生处旺相,
+或五行属金 / 火 / 水);(3)**真空亡**(C6);(4)命中另有**贵气**可凭(禄 / 马 / 贵 / 官印)。
+仅两柱空 → "有官而不大",不触发。
+> 样盘,**年太极点**:旬空 = 申酉,月 / 日 / 时三申皆空,申为壬之长生 + 金空则鸣 → **触发大贵**;
+> **日太极点(子平)**:旬空 = 戌亥,三申不空 → 不触发。**此项加分须随太极点切换。**
+> 来源:三命通会"论空亡"——"月日时皆值空亡,非为害也,乃大贵;若止二者,有官而不大",并同篇所列
+> "自旺有用 / 金空则鸣 / 真空"诸前提。子平真诠 / 盲派为反例流派(故可配置,仅古法 / 年太极点默认开)。
 
-## 4. Level summary
-- **A strong, default ON**: the three 暗合 pairs (申卯/子巳/午亥), 夹拱, 飞天/倒冲, 空亡 C1–C10, dropping 比劫 from 取格.
-- **B school switch**: `pattern_school` (七杀/偏印), `void_three_great_noble` (varies by 太极点), `reference_pillar` (already present, affects 旬空 and 天乙 derivation), `transmit_priority`.
-- **C weak, default OFF / label-only**: 邀合 (strong guard), the extended 暗合 pairs (寅丑/子戌), 天干 三奇 暗合, the 飞财 pattern, the "申 hides 戊" dispute (label a note, do not change the existing elements `[庚,壬,戊]`).
+## 3. 取格(`pattern.py`,已实现 + 已测)
 
-## 5. Golden tests (sample chart 壬午/戊申/壬申/戊申, reference_pillar='year')
-- [x] 取格 = 七杀格 (ge_gan=戊), not 比肩格 (regression); gufa_dangling -> 偏印格 with 七杀 as 兼.
-- [ ] 旬空 = {申,酉}; month/day/hour 申 all void -> three-pillars-void great nobility **triggers (year 太极点) / no trigger (day 太极点)**.
-- [ ] inviting-巳 verdict = does not hold (reasons include 申 刑 巳 + 巳 hides 戊 as 七杀 not 正官); produces no 暗天乙/暗禄.
-- [ ] 暗神: no `LatentBranch(zhi='巳', mechanism='邀合', guard_ok=True)` exists.
+- **比劫不立格**(一律剔除,归入建禄 / 月刃);若本气不透 → 依 `config.pattern_school`:
+  `ziping`(默认;取所透之他神,本子平真诠"知府不在,同知署事"之义) /
+  `gufa_dangling`(先取当令本气,所透他神为兼)。
+- 样盘:**七杀格**(ziping) / **偏印格兼七杀**(gufa)。修正旧"比肩格"之误。
+- 校验存疑:七杀 vs 偏印为流派之分(且"申是否藏戊"为藏干之争);**比肩格则诸派一致排除**。
 
-## Suggested implementation order
-1. pattern.py 取格 fix (done).
-2. the 空亡 dialectics layer `void_dialectic()` + three-pillars-void great nobility (varies by 太极点) — strong evidence and directly serving the sample chart.
-3. `latent.py`: 夹拱/飞天/倒冲 first (A, default ON), 邀合 last (C, default OFF + strong guard), so the sample chart judges "inviting 巳 does not hold".
-4. Golden tests for all of the above (§5).
+## 4. 分级汇总
+- **A 证据强,默认开**:三组暗合(申卯 / 子巳 / 午亥)、夹拱、飞天 / 倒冲、空亡 C1–C10、取格剔除比劫。
+- **B 随流派切换**:`pattern_school`(七杀 / 偏印)、`void_three_great_noble`(随太极点而变)、
+  `reference_pillar`(已有,影响旬空与天乙取法)、`transmit_priority`。
+- **C 证据弱,默认关 / 仅标注**:邀合(强把关)、扩展暗合对(寅丑 / 子戌)、天干三奇暗合、飞财格、
+  "申藏戊"之争(仅标注,不改既有 elements `[庚,壬,戊]`)。
+
+## 5. 黄金测试(样盘 壬午 / 戊申 / 壬申 / 戊申,reference_pillar='year')
+- [x] 取格 = 七杀格(ge_gan=戊),非比肩格(回归测试);gufa_dangling → 偏印格兼七杀。
+- [ ] 旬空 = {申,酉};月 / 日 / 时三申皆空 → 三柱皆空化大贵 **触发(年太极点) / 不触发(日太极点)**。
+- [ ] 邀巳判词 = 不成立(理由含 申刑巳 + 巳藏戊为七杀而非正官);不产生暗天乙 / 暗禄。
+- [ ] 暗神:不存在 `LatentBranch(zhi='巳', mechanism='邀合', guard_ok=True)`。
+
+## 实现顺序建议
+1. pattern.py 取格修正(已完成)。
+2. 空亡辩证层 `void_dialectic()` + 三柱皆空化大贵(随太极点而变)——证据强,且直接服务样盘。
+3. `latent.py`:先做夹拱 / 飞天 / 倒冲(A,默认开),邀合最后(C,默认关 + 强把关),使样盘判"邀巳不成立"。
+4. 为以上全部补黄金测试(§5)。
