@@ -1,0 +1,26 @@
+[project]
+name = "tyche"
+version = "0.1.0"
+description = "AI 命理 / divination engine — charting core (子平/禄命 dual paradigm, configurable 太极点)"
+requires-python = ">=3.10"
+dependencies = [
+    "lunar-python>=1.4.0",
+    "pyyaml>=6",
+]
+
+[project.optional-dependencies]
+api = ["fastapi>=0.110", "uvicorn[standard]>=0.27"]
+astro = ["skyfield>=1.49"]   # 七政 (sun/moon/5 planets) positions; the 四余 are pure-formula and need neither
+dev = ["pytest>=8", "httpx>=0.27", "fastapi>=0.110"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tyche"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"

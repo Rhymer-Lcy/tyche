@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Node
+node_modules/
+dist/
+build/
+
+# Env / secrets
+.env
+.env.*
+*.local
+
+# Models / data (keep large files out of git; anchored to the repo root so it does not catch
+# package data dirs such as src/tyche/rules/data/)
+*.bin
+*.gguf
+*.safetensors
+/data/
+/models/
+
+# runtime artifacts / sample chart output / scratch
+runtime/
+_tmp*
+*.tmp
+
+# local source documents (命理 classics: PDF/doc/txt, not committed)
+docs_local/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.log
